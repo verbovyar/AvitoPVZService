@@ -73,4 +73,79 @@ func (h *Handlers) Register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
-//-----------------
+// -----------------
+type loginReq struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
+	var body loginReq
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Email == "" || body.Password == "" {
+		http.Error(w, `{"message": "Invalid request"}`, http.StatusBadRequest)
+		return
+	}
+
+	var user *domain.User
+
+	// TODO Вызов к БД
+
+	if user == nil {
+		http.Error(w, `{"message": "Invalid credentials"}`, http.StatusUnauthorized)
+		return
+	}
+	token, err := tokens.CreateToken(user.Id, user.Role)
+	if err != nil {
+		http.Error(w, `{"message": "Failed to create token"}`, http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(token)
+}
+
+// -----------------
+type createPVZReq struct {
+	City string `json:"city"`
+}
+
+func (h *Handlers) CreatePVZ(w http.ResponseWriter, r *http.Request) {
+	var body createPVZReq
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, `{"message": "Invalid request"}`, http.StatusBadRequest)
+		return
+	}
+
+	allowedCities := map[string]bool{
+		"Москва":          true,
+		"Санкт-Петербург": true,
+		"Казань":          true,
+	}
+	if !allowedCities[body.City] {
+		http.Error(w, `{"message": "PVZ creation allowed only in Москва, Санкт-Петербург, Казань"}`, http.StatusBadRequest)
+		return
+
+	}
+
+	pvzID := uuid.New().String()
+	pvz := &domain.PVZ{
+		Id:               pvzID,
+		City:             body.City,
+		RegistrationDate: time.Now(),
+	}
+
+	// TODO кладем в БД
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(pvz)
+}
+
+// -----------------
+
+type ReceptionWithProducts struct {
+	Reception *domain.Reception `json:"reception"`
+	Products  []*domain.Product `json:"products"`
+}
+
+type PVZWithReceptions struct {
+	PVZ        *domain.PVZ             `json:"pvz"`
+	Receptions []ReceptionWithProducts `json:"receptions"`
+}
