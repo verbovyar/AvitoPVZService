@@ -3,7 +3,7 @@ package domain
 import "time"
 
 type User struct {
-	Id               string    `json:"id"`
+	ID               string    `json:"id"`
 	Email            string    `json:"email"`
 	PasswordHash     string    `json:"-"`
 	Role             string    `json:"role"`
@@ -11,22 +11,21 @@ type User struct {
 }
 
 type PVZ struct {
-	Id               string    `json:"id"`
-	RegistrationDate time.Time `json:"registrationDate"`
+	ID               string    `json:"id"`
 	City             string    `json:"city"`
+	RegistrationDate time.Time `json:"registrationDate"`
 }
 
 type Reception struct {
-	Id       string     `json:"id"`
-	DateTime time.Time  `json:"dateTime"`
-	PVZId    string     `json:"pvzId"`
-	Status   string     `json:"status"`
-	Products []*Product `json:"-"`
+	ID       string    `json:"id"`
+	PVZID    string    `json:"pvzId"`
+	DateTime time.Time `json:"dateTime"`
+	Status   string    `json:"status"`
 }
 
 type Product struct {
-	Id          string    `json:"id"`
-	DateTime    time.Time `json:"dateTime"`
+	ID          string    `json:"id"`
+	ReceptionID string    `json:"receptionId"`
 	Type        string    `json:"type"`
-	ReceptionId string    `json:"receptionId"`
+	DateTime    time.Time `json:"dateTime"`
 }

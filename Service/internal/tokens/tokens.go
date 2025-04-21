@@ -25,57 +25,44 @@ func CreateToken(userID, role string) (string, error) {
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtSecret)
+	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	
+	return t.SignedString(jwtSecret)
 }
 
 type contextKey string
 
 const claimsKey = contextKey("claims")
 
-func contextWithClaims(ctx context.Context, claims *Claims) context.Context {
-	return context.WithValue(ctx, claimsKey, claims)
-}
-
-func claimsFromContext(ctx context.Context) (*Claims, bool) {
-	claims, ok := ctx.Value(claimsKey).(*Claims)
-	return claims, ok
-}
-
-func authMiddleware(handler http.HandlerFunc, requiredRoles ...string) http.HandlerFunc {
+func AuthMiddleware(h http.HandlerFunc, roles ...string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, `{"message": "Authorization header missing"}`, http.StatusUnauthorized)
+		hdr := r.Header.Get("Authorization")
+		if hdr == "" {
+			http.Error(w, `{"message":"missing auth"}`, http.StatusUnauthorized)
 			return
 		}
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		tok := strings.TrimPrefix(hdr, "Bearer ")
+		parsed, err := jwt.ParseWithClaims(tok, &Claims{}, func(t *jwt.Token) (interface{}, error) {
 			return jwtSecret, nil
 		})
-		if err != nil || !token.Valid {
-			http.Error(w, `{"message": "Invalid token"}`, http.StatusUnauthorized)
+		if err != nil || !parsed.Valid {
+			http.Error(w, `{"message":"invalid token"}`, http.StatusUnauthorized)
 			return
 		}
-		claims, ok := token.Claims.(*Claims)
-		if !ok {
-			http.Error(w, `{"message": "Invalid claims"}`, http.StatusUnauthorized)
-			return
-		}
-		if len(requiredRoles) > 0 {
-			allowed := false
-			for _, role := range requiredRoles {
-				if claims.Role == role {
-					allowed = true
-					break
+		c := parsed.Claims.(*Claims)
+		if len(roles) > 0 {
+			ok := false
+			for _, role := range roles {
+				if c.Role == role {
+					ok = true
 				}
 			}
-			if !allowed {
-				http.Error(w, `{"message": "Insufficient permissions"}`, http.StatusForbidden)
+			if !ok {
+				http.Error(w, `{"message":"forbidden"}`, http.StatusForbidden)
 				return
 			}
 		}
-		ctx := contextWithClaims(r.Context(), claims)
-		handler(w, r.WithContext(ctx))
+		r = r.WithContext(context.WithValue(r.Context(), claimsKey, c))
+		h(w, r)
 	}
 }
