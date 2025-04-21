@@ -5,20 +5,20 @@ CREATE SCHEMA IF NOT EXISTS avito_schema;
 
 -- таблица пользователей
 CREATE TABLE avito_schema.users (
-                                    id UUID PRIMARY KEY,
-                                    email TEXT NOT NULL UNIQUE,
-                                    password_hash TEXT NOT NULL,
-                                    role TEXT NOT NULL,
-                                    registration_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    id UUID PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL,
+    registration_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- таблица ПВЗ
 CREATE TABLE avito_schema.pvz (
-                                  id UUID PRIMARY KEY,
-                                  city TEXT NOT NULL,
-                                  registration_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-                                  is_reception_open BOOLEAN NOT NULL DEFAULT FALSE,
-                                  receptions JSONB NOT NULL DEFAULT '[]'
+     id UUID PRIMARY KEY,
+     city TEXT NOT NULL,
+     registration_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+     is_reception_open BOOLEAN NOT NULL DEFAULT FALSE,
+     receptions JSONB NOT NULL DEFAULT '[]'
 );
 
 -- индекс для ускорения поиска по email
