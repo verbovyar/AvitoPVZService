@@ -31,9 +31,6 @@ func New(pool interfaces.PgxPoolIface) *PostgresRepository {
 }
 
 func (r *PostgresRepository) Register(email, password, role string) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
 	id := uuid.NewString()
 	const query = `INSERT INTO avito_schema.users(id,email,password_hash,role,registration_date) VALUES($1,$2,$3,$4,$5)`
 	_, err := r.Pool.Exec(context.Background(), query, id, email, password, role, time.Now())
@@ -42,9 +39,6 @@ func (r *PostgresRepository) Register(email, password, role string) error {
 }
 
 func (r *PostgresRepository) Login(email string) (error, *domain.User) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
 	var user domain.User
 	const query = `SELECT id,password_hash,role FROM avito_schema.users WHERE email=$1`
 	row := r.Pool.QueryRow(context.Background(), query, email)
@@ -54,9 +48,6 @@ func (r *PostgresRepository) Login(email string) (error, *domain.User) {
 }
 
 func (r *PostgresRepository) CreatePVZ(city, id string, regTime time.Time) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
 	const query = `INSERT INTO avito_schema.pvz(id, city, registration_date, is_reception_open, receptions) VALUES($1,$2,$3,$4,$5)`
 	_, err := r.Pool.Exec(context.Background(), query, id, city, regTime, false, "[]")
 
@@ -72,9 +63,6 @@ type receptionJson struct {
 }
 
 func (r *PostgresRepository) CreateReception(PVZID string, id string, dateTime time.Time) (error, *json.RawMessage) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
 	rec := receptionJson{
 		ID:       id,
 		PvzID:    PVZID,
@@ -113,9 +101,6 @@ type productJson struct {
 }
 
 func (r *PostgresRepository) AddProduct(id string, dateTime time.Time, prodType, PVZID string) (error, *json.RawMessage) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
 	prod := productJson{
 		ID:          id,
 		DateTime:    dateTime,
@@ -165,9 +150,6 @@ func (r *PostgresRepository) AddProduct(id string, dateTime time.Time, prodType,
 }
 
 func (r *PostgresRepository) DeleteLastProduct(PVZID string) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
 	const query = `
 	UPDATE avito_schema.pvz
 	SET receptions = jsonb_set(
@@ -189,9 +171,6 @@ func (r *PostgresRepository) DeleteLastProduct(PVZID string) error {
 }
 
 func (r *PostgresRepository) CloseLastReception(PVZID string, closedAt time.Time) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
 	const query = `
 	UPDATE avito_schema.pvz
 	SET
@@ -216,9 +195,6 @@ func (r *PostgresRepository) CloseLastReception(PVZID string, closedAt time.Time
 }
 
 func (r *PostgresRepository) ListPVZ(endStr, startStr string, limit, offset int) (error, *[]domain.PVZ) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
 	const sqlQuery = `
 	SELECT id, city, registration_date
 	  FROM avito_schema.pvz
@@ -248,9 +224,6 @@ func (r *PostgresRepository) ListPVZ(endStr, startStr string, limit, offset int)
 }
 
 func (r *PostgresRepository) GrpcListPVz(endPeriod, startPeriod string, limit, offset int) (error, []*handlers.ProtoPVZ) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	
 	const sqlQuery = `
 	SELECT id, registration_date, city
 	  FROM avito_schema.pvz
