@@ -9,6 +9,7 @@ type Config struct {
 	Port             string `mapstructure:"PORT"`
 	ConnectingString string `mapstructure:"CONNECTING_STRING"`
 	GrpcPort         string `mapstructure:"GRPC_PORT"`
+	NetworkType      string `mapstructure:"NETWORK_TYPE"`
 }
 
 func LoadConfig(path string) (config Config, err error) {
@@ -22,8 +23,6 @@ func LoadConfig(path string) (config Config, err error) {
 	}
 
 	err = viper.Unmarshal(&config)
-
-	fmt.Println(config.ConnectingString)
 
 	return
 }

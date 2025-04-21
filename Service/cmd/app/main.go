@@ -8,7 +8,9 @@ import (
 	postgres "AvitoPVZService/Service/pkg"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"google.golang.org/grpc"
 	"log"
+	"net"
 	"net/http"
 )
 
@@ -22,6 +24,7 @@ func main() {
 
 	go startMetrics()
 	repo := startRepo(&conf)
+	go startGRPC(&conf, repo)
 	startHTTP(&conf, repo)
 }
 
@@ -46,4 +49,16 @@ func startMetrics() {
 	mux.Handle("/metrics", promhttp.Handler())
 	log.Println("Metrics on :9000")
 	log.Fatal(http.ListenAndServe(":9000", mux))
+}
+
+func startGRPC(config *config.Config, repo interfaces.Repository) {
+	lis, err := net.Listen(config.NetworkType, config.GrpcPort)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	grpcServer := grpc.NewServer()
+	grpcH := handlers.NewGrpcHandlers(repo)
+	handlers.RegisterPVZServiceServer(grpcServer, grpcH)
+	log.Println("gRPC server listening on :3000")
+	grpcServer.Serve(lis)
 }

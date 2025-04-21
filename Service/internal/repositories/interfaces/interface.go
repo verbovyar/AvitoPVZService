@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"AvitoPVZService/Service/internal/domain"
+	"AvitoPVZService/Service/internal/handlers"
 	"encoding/json"
 	"time"
 )
@@ -15,4 +16,5 @@ type Repository interface {
 	DeleteLastProduct(PVZID string) error
 	CloseLastReception(PVZID string, closedAt time.Time) error
 	ListPVZ(endStr, startStr string, limit, offset int) (error, *[]domain.PVZ)
+	GrpcListPVz(endPeriod, startPeriod string, limit, offset int) (error, []*handlers.ProtoPVZ)
 }

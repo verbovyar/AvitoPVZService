@@ -2,10 +2,12 @@ package db
 
 import (
 	"AvitoPVZService/Service/internal/domain"
+	"AvitoPVZService/Service/internal/handlers"
 	"AvitoPVZService/Service/internal/repositories/interfaces"
 	"context"
 	"encoding/json"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"log"
 	"sync"
 	"time"
@@ -219,4 +221,38 @@ func (r *PostgresRepository) ListPVZ(endStr, startStr string, limit, offset int)
 	}
 
 	return err, &result
+}
+
+func (r *PostgresRepository) GrpcListPVz(endPeriod, startPeriod string, limit, offset int) (error, []*handlers.ProtoPVZ) {
+	const sqlQuery = `
+	SELECT id, registration_date, city
+	  FROM avito_schema.pvz
+	 WHERE EXISTS (
+		 SELECT 1
+		   FROM jsonb_array_elements(receptions) AS reception
+		  WHERE (reception->>'open_at') <= $1
+			AND (reception->>'closed_at') >= $2
+	 )
+	 LIMIT $3 OFFSET $4;
+`
+
+	rows, err := r.Pool.Query(context.Background(), sqlQuery, endPeriod, startPeriod, limit, offset)
+
+	defer rows.Close()
+
+	var resp []*handlers.ProtoPVZ
+	for rows.Next() {
+		var id, city string
+		var dt time.Time
+		if err := rows.Scan(&id, &dt, &city); err != nil {
+			continue
+		}
+		resp = append(resp, &handlers.ProtoPVZ{
+			Id:               id,
+			RegistrationDate: timestamppb.New(dt),
+			City:             city,
+		})
+	}
+
+	return err, resp
 }
