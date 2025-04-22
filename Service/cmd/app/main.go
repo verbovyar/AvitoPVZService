@@ -12,12 +12,14 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"path/filepath"
 )
 
 func main() {
 	fmt.Println("Start server")
 
-	conf, err := config.LoadConfig("C:\\Users\\Yaroslav\\go\\src\\AvitoPVZService\\Service\\config")
+	absPath, err := filepath.Abs("config")
+	conf, err := config.LoadConfig(absPath)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
