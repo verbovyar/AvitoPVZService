@@ -10,6 +10,13 @@ type Config struct {
 	ConnectingString string `mapstructure:"CONNECTING_STRING"`
 	GrpcPort         string `mapstructure:"GRPC_PORT"`
 	NetworkType      string `mapstructure:"NETWORK_TYPE"`
+
+	DBHost     string `env:"DB_HOST" env-default:"localhost"`
+	DBPort     string `env:"DB_PORT" env-default:"5432"`
+	DBUser     string `env:"DB_USER" env-default:"postgres"`
+	DBPassword string `env:"DB_PASSWORD" env-default:"postgres"`
+	DBName     string `env:"DB_NAME" env-default:"avito_pvz"`
+	RunMigs    bool   `env:"RUN_MIGRATIONS" env-default:"false"`
 }
 
 func LoadConfig(path string) (config Config, err error) {
